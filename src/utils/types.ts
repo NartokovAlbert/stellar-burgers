@@ -38,3 +38,27 @@ export type TUser = {
 };
 
 export type TTabMode = 'bun' | 'sauce' | 'main';
+
+
+type ServerResponse<T> = {
+	success: boolean;
+} & T;
+
+export type UserResponse = ServerResponse<{
+	user: TUser;
+}>;
+
+export type UserResponseToken = ServerResponse<{
+	user: TUser;
+	accessToken: string;
+	refreshToken: string;
+}>;
+
+export type UserLoginBodyDto = {
+	email: string;
+	password: string;
+};
+
+export type UserRegisterBodyDto = {
+	password: string;
+} & TUser;
