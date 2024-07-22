@@ -3,8 +3,8 @@ import { useInView } from 'react-intersection-observer';
 
 import { TTabMode } from '@utils-types';
 import { BurgerIngredientsUI } from '../ui/burger-ingredients';
-import { selectorIngredients } from 'src/services/ingredientsSlice';
-import { useSelector } from 'src/services/store';
+import { selectorIngredients } from '../../services/slices/ingredientsSlice';
+import { useSelector } from '../../services/store';
 
 export const BurgerIngredients: FC = () => {
   const { selectorIngredientsData } = selectorIngredients;
@@ -18,15 +18,19 @@ export const BurgerIngredients: FC = () => {
   const titleBunRef = useRef<HTMLHeadingElement>(null);
   const titleMainRef = useRef<HTMLHeadingElement>(null);
   const titleSaucesRef = useRef<HTMLHeadingElement>(null);
+
   const [bunsRef, inViewBuns] = useInView({
     threshold: 0
   });
+
   const [mainsRef, inViewFilling] = useInView({
     threshold: 0
   });
+
   const [saucesRef, inViewSauces] = useInView({
     threshold: 0
   });
+
   useEffect(() => {
     if (inViewBuns) {
       setCurrentTab('bun');
@@ -36,6 +40,7 @@ export const BurgerIngredients: FC = () => {
       setCurrentTab('main');
     }
   }, [inViewBuns, inViewFilling, inViewSauces]);
+
   const onTabClick = (tab: string) => {
     setCurrentTab(tab as TTabMode);
     if (tab === 'bun')
