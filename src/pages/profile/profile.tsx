@@ -1,50 +1,55 @@
+import { FC, useEffect, useState } from 'react';
+import { useDispatch, useSelector } from '../../services/store';
+import { fetchUpdateUser, selectUser } from '../../services/slices/userReducer';
 import { ProfileUI } from '@ui-pages';
-import { FC, SyntheticEvent, useEffect, useState } from 'react';
 
 export const Profile: FC = () => {
-  /** TODO: взять переменную из стора */
-  const user = {
-    name: '',
-    email: ''
-  };
-
+  const user = useSelector(selectUser);
+  const dispatch = useDispatch();
   const [formValue, setFormValue] = useState({
-    name: user.name,
-    email: user.email,
+    name: '',
+    email: '',
     password: ''
   });
 
   useEffect(() => {
-    setFormValue((prevState) => ({
-      ...prevState,
-      name: user?.name || '',
-      email: user?.email || ''
-    }));
+    // Инициализация формы текущими значениями пользователя
+    if (user) {
+      setFormValue({
+        name: user.name || '',
+        email: user.email || '',
+        password: ''
+      });
+    }
   }, [user]);
 
+  // Проверка, изменилось ли состояние формы по сравнению с данными пользователя
   const isFormChanged =
     formValue.name !== user?.name ||
     formValue.email !== user?.email ||
-    !!formValue.password;
+    formValue.password.length > 0;
 
-  const handleSubmit = (e: SyntheticEvent) => {
+  const handleSubmit = (e: React.SyntheticEvent) => {
     e.preventDefault();
+    if (isFormChanged) {
+      dispatch(fetchUpdateUser(formValue));
+    }
   };
 
-  const handleCancel = (e: SyntheticEvent) => {
+  const handleCancel = (e: React.SyntheticEvent) => {
     e.preventDefault();
-    setFormValue({
-      name: user.name,
-      email: user.email,
-      password: ''
-    });
+    if (user) {
+      setFormValue({
+        name: user.name,
+        email: user.email,
+        password: ''
+      });
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormValue((prevState) => ({
-      ...prevState,
-      [e.target.name]: e.target.value
-    }));
+    const { name, value } = e.target;
+    setFormValue((prevState) => ({ ...prevState, [name]: value }));
   };
 
   return (
@@ -56,6 +61,4 @@ export const Profile: FC = () => {
       handleInputChange={handleInputChange}
     />
   );
-
-  return null;
 };

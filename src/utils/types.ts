@@ -26,6 +26,13 @@ export type TOrder = {
   ingredients: string[];
 };
 
+export type TOrderResponse = {
+  _id: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  order: TOrder;
+};
 export type TOrdersData = {
   orders: TOrder[];
   total: number;
@@ -38,26 +45,3 @@ export type TUser = {
 };
 
 export type TTabMode = 'bun' | 'sauce' | 'main';
-
-type ServerResponse<T> = {
-  success: boolean;
-} & T;
-
-export type UserResponse = ServerResponse<{
-  user: TUser;
-}>;
-
-export type UserResponseToken = ServerResponse<{
-  user: TUser;
-  accessToken: string;
-  refreshToken: string;
-}>;
-
-export type UserLoginBodyDto = {
-  email: string;
-  password: string;
-};
-
-export type UserRegisterBodyDto = {
-  password: string;
-} & TUser;

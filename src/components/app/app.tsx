@@ -1,63 +1,106 @@
-import '../../index.css';
-import styles from './app.module.css';
+import React, { useEffect, useCallback } from 'react';
 import {
   Routes,
   Route,
-  Location,
   useLocation,
-  useNavigate
+  useNavigate,
+  Location
 } from 'react-router-dom';
-import { AppHeader, OrderInfo, Modal, IngredientDetails } from '@components';
-import { ProtectedRoute } from '../ProtectedRoute/ProtectedRoute';
+import { useDispatch } from '../../services/store';
+import { fetchIngredients } from '../../services/slices/ingredientReducer';
+import { fetchGetUser } from '../../services/slices/userReducer';
+import '../../index.css';
+import styles from './app.module.css';
+
+import {
+  AppHeader,
+  IngredientDetails,
+  Modal,
+  OrderInfo,
+  ProtectedRoute
+} from '@components';
 import {
   ConstructorPage,
   Feed,
-  Login,
-  Register,
   ForgotPassword,
-  ResetPassword,
+  Login,
+  NotFound404,
   Profile,
   ProfileOrders,
-  NotFound404
+  Register,
+  ResetPassword
 } from '@pages';
-import { useEffect } from 'react';
 
-import { userActions } from '../../services/slices/userSlice';
-import { useActionCreators } from '../../services/hooks';
-import { getIngredients } from '../../services/slices/ingredientsSlice';
-import { useDispatch } from '../../services/store';
-import { getFeed } from '../../services/slices/feedSlice';
-import { getOrders } from '../../services/slices/ordersSlice';
-
-export const App = () => {
-  const { authCheck, loginUser, registerUser, checkUserAuth } =
-    useActionCreators(userActions);
-  const location: Location<{ backgroundLocation: Location }> = useLocation();
-  const backgroundLocation = location.state?.backgroundLocation;
-  const navigate = useNavigate();
+const useInitialDataLoad = () => {
   const dispatch = useDispatch();
-
-  const onCloseModal = () => {
-    navigate(-1);
-  };
-
   useEffect(() => {
-    checkUserAuth()
-      .unwrap()
-      .catch(() => {})
-      .finally(() => authCheck());
-    dispatch(getIngredients());
-    dispatch(getFeed());
-    dispatch(getOrders());
-  }, [authCheck]);
+    dispatch(fetchIngredients());
+    dispatch(fetchGetUser());
+    localStorage.removeItem('resetPassword');
+  }, [dispatch]);
+};
+
+interface ModalRoutesProps {
+  background: Location;
+  closeModal: () => void;
+}
+
+const ModalRoutes: React.FC<ModalRoutesProps> = ({
+  background,
+  closeModal
+}) => {
+  const orderInfoTitle = 'Информация о заказе';
+  const ingredientDetailsTitle = 'Детали ингредиента';
+
+  return (
+    <Routes>
+      <Route
+        path='/feed/:number'
+        element={
+          <Modal title={orderInfoTitle} onClose={closeModal}>
+            <OrderInfo />
+          </Modal>
+        }
+      />
+      <Route
+        path='/ingredients/:id'
+        element={
+          <Modal title={ingredientDetailsTitle} onClose={closeModal}>
+            <IngredientDetails />
+          </Modal>
+        }
+      />
+      <Route
+        path='/profile/orders/:number'
+        element={
+          <Modal title={orderInfoTitle} onClose={closeModal}>
+            <OrderInfo />
+          </Modal>
+        }
+      />
+    </Routes>
+  );
+};
+
+const App: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const background = location.state?.background;
+
+  useInitialDataLoad();
+
+  const closeModal = useCallback(() => {
+    navigate(-1);
+  }, [navigate]);
 
   return (
     <div className={styles.app}>
       <AppHeader />
-      <Routes location={backgroundLocation || location}>
+      <Routes location={background || location}>
         <Route path='/' element={<ConstructorPage />} />
         <Route path='/feed' element={<Feed />} />
-        <Route path='*' element={<NotFound404 />} />
+        <Route path='/feed/:number' element={<OrderInfo />} />
+        <Route path='/ingredients/:id' element={<IngredientDetails />} />
         <Route
           path='/login'
           element={
@@ -107,15 +150,6 @@ export const App = () => {
           }
         />
         <Route
-          path='/feed/:number'
-          element={
-            <ProtectedRoute>
-              <OrderInfo />
-            </ProtectedRoute>
-          }
-        />
-        <Route path='/ingredients/:id' element={<IngredientDetails />} />
-        <Route
           path='/profile/orders/:number'
           element={
             <ProtectedRoute>
@@ -123,36 +157,11 @@ export const App = () => {
             </ProtectedRoute>
           }
         />
+        <Route path='*' element={<NotFound404 />} />
       </Routes>
-      {backgroundLocation && (
-        <Routes>
-          <Route
-            path='/feed/:number'
-            element={
-              <ProtectedRoute>
-                <Modal title='' onClose={onCloseModal}>
-                  <OrderInfo />
-                </Modal>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path='/ingredients/:id'
-            element={
-              <Modal title='' onClose={onCloseModal}>
-                <IngredientDetails />
-              </Modal>
-            }
-          />
-          <Route
-            path='/profile/orders/:number'
-            element={
-              <Modal title='' onClose={onCloseModal}>
-                <OrderInfo />
-              </Modal>
-            }
-          />
-        </Routes>
+
+      {background && (
+        <ModalRoutes background={background} closeModal={closeModal} />
       )}
     </div>
   );

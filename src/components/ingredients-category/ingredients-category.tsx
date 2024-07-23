@@ -8,7 +8,9 @@ export const IngredientsCategory = forwardRef<
   HTMLUListElement,
   TIngredientsCategoryProps
 >(({ title, titleRef, ingredients }, ref) => {
-  const burgerConstructor = useSelector((store) => store.constructorBurger);
+  const burgerConstructor = useSelector(
+    (store) => store.burgerConstructor.constructorItems
+  );
 
   const ingredientsCounters = useMemo(() => {
     const { bun, ingredients } = burgerConstructor;
