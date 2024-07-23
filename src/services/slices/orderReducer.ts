@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { orderBurgerApi } from '@api';
-import { TOrder, TOrderResponse } from '@utils-types';
+import { TOrder } from '@utils-types';
 import { RootState } from '../store';
 
 interface AsyncThunkConfig {

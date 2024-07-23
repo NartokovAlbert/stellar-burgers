@@ -1,7 +1,8 @@
 import {
   createAsyncThunk,
   createSlice,
-  createSelector
+  createSelector,
+  PayloadAction
 } from '@reduxjs/toolkit';
 import { getIngredientsApi } from '@api';
 import { TIngredient } from '@utils-types';
@@ -19,17 +20,22 @@ const initialState: IIngredientSliceState = {
   error: undefined
 };
 
-// Обновлённая типизация и обработка ответа от API
+interface FetchIngredientsError {
+  message: string;
+}
+
 export const fetchIngredients = createAsyncThunk<
   TIngredient[],
   void,
-  { rejectValue: string }
+  { rejectValue: FetchIngredientsError }
 >('ingredients/fetchIngredients', async (_, { rejectWithValue }) => {
   try {
-    const response: TIngredient[] = await getIngredientsApi(); // Предполагаем, что API возвращает массив напрямую
+    const response: TIngredient[] = await getIngredientsApi();
     return response;
   } catch (error: any) {
-    return rejectWithValue(error.message || 'An unknown error occurred');
+    return rejectWithValue({
+      message: error.message || 'An unknown error occurred'
+    });
   }
 });
 
@@ -42,23 +48,34 @@ const ingredientsSlice = createSlice({
       .addCase(fetchIngredients.pending, (state) => {
         state.isIngredientsLoading = true;
       })
-      .addCase(fetchIngredients.rejected, (state, action) => {
-        state.isIngredientsLoading = false;
-        state.error = action.payload || 'An error occurred';
-      })
-      .addCase(fetchIngredients.fulfilled, (state, action) => {
-        state.isIngredientsLoading = false;
-        state.ingredients = action.payload;
-      });
+      .addCase(
+        fetchIngredients.rejected,
+        (state, action: PayloadAction<FetchIngredientsError | undefined>) => {
+          state.isIngredientsLoading = false;
+          state.error = action.payload?.message || 'An error occurred';
+        }
+      )
+      .addCase(
+        fetchIngredients.fulfilled,
+        (state, action: PayloadAction<TIngredient[]>) => {
+          state.isIngredientsLoading = false;
+          state.ingredients = action.payload;
+        }
+      );
   }
 });
 
-export const selectIngredients = (state: RootState) =>
+export const selectIngredients = (state: RootState): TIngredient[] =>
   state.ingredients.ingredients;
-export const selectIngredientsLoading = (state: RootState) =>
+
+export const selectIngredientsLoading = (state: RootState): boolean =>
   state.ingredients.isIngredientsLoading;
+
+export const selectIngredientsError = (state: RootState): string | undefined =>
+  state.ingredients.error;
+
 export const selectIngredientsByType = (type: string) =>
-  createSelector([selectIngredients], (ingredients) =>
+  createSelector([selectIngredients], (ingredients: TIngredient[]) =>
     ingredients.filter((item) => item.type === type)
   );
 

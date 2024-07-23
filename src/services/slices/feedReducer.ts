@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { getFeedsApi } from '@api';
 import { TOrder } from '@utils-types';
 
@@ -7,7 +7,7 @@ type TFeedSliceState = {
   feedIsLoading: boolean;
   total: number;
   totalToday: number;
-  error?: string | never;
+  error: string | undefined;
 };
 
 const initialState: TFeedSliceState = {
@@ -19,8 +19,14 @@ const initialState: TFeedSliceState = {
 };
 
 type FeedApiResponse =
-  | { orders: TOrder[]; total: number; totalToday: number }
-  | { error: string };
+  | {
+      orders: TOrder[];
+      total: number;
+      totalToday: number;
+    }
+  | {
+      error: string;
+    };
 
 export const fetchFeedsApi = createAsyncThunk<
   FeedApiResponse,
@@ -30,18 +36,24 @@ export const fetchFeedsApi = createAsyncThunk<
   try {
     const response = await getFeedsApi();
 
-    // Проверка на наличие ошибки в ответе
-    if ('error' in response) {
+    if (
+      typeof response === 'object' &&
+      'error' in response &&
+      typeof response.error === 'string'
+    ) {
       return rejectWithValue(response.error);
     }
+    if ('orders' in response) {
+      return response;
+    }
 
-    return response;
-  } catch (error) {
-    // Приведение типа error к unknown и проверка на экземпляр Error
-    if (error instanceof Error) {
+    return rejectWithValue('Invalid API response');
+  } catch (error: unknown) {
+    if (error instanceof Error && typeof error.message === 'string') {
       return rejectWithValue(error.message);
     }
-    return rejectWithValue('Network error');
+
+    return rejectWithValue('ошибка');
   }
 });
 
@@ -54,30 +66,23 @@ const feedSlice = createSlice({
       .addCase(fetchFeedsApi.pending, (state) => {
         state.feedIsLoading = true;
       })
-      .addCase(
-        fetchFeedsApi.rejected,
-        (state, action: PayloadAction<string | undefined>) => {
-          state.feedIsLoading = false;
-          state.error = action.payload || 'An unknown error occurred';
+      .addCase(fetchFeedsApi.rejected, (state, action) => {
+        state.feedIsLoading = false;
+        state.error = action.payload || 'An unknown error occurred';
+      })
+      .addCase(fetchFeedsApi.fulfilled, (state, action) => {
+        state.feedIsLoading = false;
+        if ('orders' in action.payload) {
+          state.feeds = action.payload.orders;
+          state.total = action.payload.total;
+          state.totalToday = action.payload.totalToday;
+        } else {
+          state.error = action.payload.error;
         }
-      )
-      .addCase(
-        fetchFeedsApi.fulfilled,
-        (state, action: PayloadAction<FeedApiResponse>) => {
-          state.feedIsLoading = false;
-          if ('orders' in action.payload) {
-            state.feeds = action.payload.orders;
-            state.total = action.payload.total;
-            state.totalToday = action.payload.totalToday;
-          } else {
-            state.error = action.payload.error;
-          }
-        }
-      );
+      });
   }
 });
 
-// Селекторы с улучшенной типизацией
 export const selectFeedIsLoading = (state: { feed: TFeedSliceState }) =>
   state.feed.feedIsLoading;
 export const selectFeeds = (state: { feed: TFeedSliceState }) =>

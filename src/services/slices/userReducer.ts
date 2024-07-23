@@ -21,7 +21,6 @@ const clearTokens = () => {
   localStorage.removeItem('refreshToken');
 };
 
-// Создание асинхронных thunk'ов для различных операций
 export const fetchRegisterUser = createAsyncThunk(
   'register/fetchRegisterUser',
   async (data: TRegisterData, { rejectWithValue }) => {
@@ -82,7 +81,6 @@ export const fetchLogout = createAsyncThunk(
   }
 );
 
-// Типизация состояния аутентификации
 type TAuthState = {
   isAuthenticated: boolean;
   data: TUser;
@@ -90,7 +88,6 @@ type TAuthState = {
   loginUserRequest: boolean;
 };
 
-// Начальное состояние
 const initialState: TAuthState = {
   isAuthenticated: false,
   data: { name: '', email: '' },
@@ -98,7 +95,6 @@ const initialState: TAuthState = {
   loginUserRequest: false
 };
 
-// Создание слайса для аутентификации пользователя
 const userSlice = createSlice({
   name: 'auth',
   initialState,

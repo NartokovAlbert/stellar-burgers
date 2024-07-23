@@ -11,7 +11,7 @@ import { RootState } from '../store';
 type TOrderByNumberSliceState = {
   orders: TOrder[];
   orderIsLoading: boolean;
-  error: string | undefined;
+  error?: string;
 };
 
 // Начальное состояние
@@ -21,6 +21,7 @@ const initialState: TOrderByNumberSliceState = {
   error: undefined
 };
 
+// Асинхронная функция для получения заказа по номеру
 export const fetchOrderByNumber = createAsyncThunk<
   TOrder[],
   number,
@@ -30,18 +31,21 @@ export const fetchOrderByNumber = createAsyncThunk<
   }
 >(
   'getOrderByNumber/fetchOrderByNumber',
-  async (number, { getState, rejectWithValue }) => {
+  async (number, { rejectWithValue }) => {
     try {
       const response = await getOrderByNumberApi(number);
+
       if (response.orders) {
         return response.orders;
       } else {
-        throw new Error('Заказ не найден');
+        throw new Error('Order not found');
       }
     } catch (error) {
-      return rejectWithValue(
-        (error as Error).message || 'Произошла ошибка при получении заказа'
-      );
+      // Приведение типа error к unknown и проверка на экземпляр Error
+      if (error instanceof Error) {
+        return rejectWithValue(error.message);
+      }
+      return rejectWithValue('An error occurred while fetching the order');
     }
   }
 );
@@ -55,6 +59,7 @@ const orderByNumberSlice = createSlice({
     builder
       .addCase(fetchOrderByNumber.pending, (state) => {
         state.orderIsLoading = true;
+        state.error = undefined;
       })
       .addCase(fetchOrderByNumber.rejected, (state, action) => {
         state.orderIsLoading = false;
@@ -76,6 +81,11 @@ export const selectOrdersIsLoading = createSelector(
 export const selectOrders = createSelector(
   (state: RootState) => state.orderByNumber,
   (orderByNumber) => orderByNumber.orders
+);
+
+export const selectOrderError = createSelector(
+  (state: RootState) => state.orderByNumber,
+  (orderByNumber) => orderByNumber.error
 );
 
 export const orderByNumberReducer = orderByNumberSlice.reducer;

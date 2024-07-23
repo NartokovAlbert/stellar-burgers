@@ -3,30 +3,35 @@ import { getOrdersApi } from '@api';
 import { TOrder } from '@utils-types';
 import { RootState } from '../store';
 
+// Типизация состояния слайса
 interface FeedSliceState {
   userOrders: TOrder[];
   userOrdersIsLoading: boolean;
   error: string | null;
 }
 
+// Начальное состояние
 const initialState: FeedSliceState = {
   userOrders: [],
   userOrdersIsLoading: false,
   error: null
 };
 
+// функция для получения заказов
 export const fetchUserOrdersApi = createAsyncThunk<
   TOrder[],
   void,
   { rejectValue: string }
 >('userOrders/fetchUserOrdersApi', async (_, { rejectWithValue }) => {
   try {
-    return await getOrdersApi();
+    const response = await getOrdersApi();
+    return response;
   } catch (err: any) {
     return rejectWithValue(err.message || 'Error fetching orders');
   }
 });
 
+//  слайс для заказов
 const userOrdersSlice = createSlice({
   name: 'userOrders',
   initialState,
@@ -35,6 +40,7 @@ const userOrdersSlice = createSlice({
     builder
       .addCase(fetchUserOrdersApi.pending, (state) => {
         state.userOrdersIsLoading = true;
+        state.error = null;
       })
       .addCase(
         fetchUserOrdersApi.rejected,
@@ -53,10 +59,15 @@ const userOrdersSlice = createSlice({
   }
 });
 
+// Редюсер
 export const userOrdersReducer = userOrdersSlice.reducer;
 
-// Selectors
-export const selectUserOrdersIsLoading = (state: FeedSliceState) =>
-  state.userOrdersIsLoading;
+// Селекторы
+export const selectUserOrdersIsLoading = (state: RootState) =>
+  state.userOrders.userOrdersIsLoading;
+
 export const selectUserOrders = (state: RootState) =>
   state.userOrders.userOrders;
+
+export const selectUserOrdersError = (state: RootState) =>
+  state.userOrders.error;
