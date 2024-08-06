@@ -1,11 +1,5 @@
 import React, { useEffect, useCallback } from 'react';
-import {
-  Routes,
-  Route,
-  useLocation,
-  useNavigate,
-  Location
-} from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch } from '../../services/store';
 import { fetchIngredients } from '../../services/slices/ingredientReducer';
 import { fetchGetUser } from '../../services/slices/userReducer';
@@ -40,49 +34,7 @@ const useInitialDataLoad = () => {
   }, [dispatch]);
 };
 
-interface ModalRoutesProps {
-  background: Location;
-  closeModal: () => void;
-}
-
-const ModalRoutes: React.FC<ModalRoutesProps> = ({
-  background,
-  closeModal
-}) => {
-  const orderInfoTitle = 'Информация о заказе';
-  const ingredientDetailsTitle = 'Детали ингредиента';
-
-  return (
-    <Routes>
-      <Route
-        path='/feed/:number'
-        element={
-          <Modal title={orderInfoTitle} onClose={closeModal}>
-            <OrderInfo />
-          </Modal>
-        }
-      />
-      <Route
-        path='/ingredients/:id'
-        element={
-          <Modal title={ingredientDetailsTitle} onClose={closeModal}>
-            <IngredientDetails />
-          </Modal>
-        }
-      />
-      <Route
-        path='/profile/orders/:number'
-        element={
-          <Modal title={orderInfoTitle} onClose={closeModal}>
-            <OrderInfo />
-          </Modal>
-        }
-      />
-    </Routes>
-  );
-};
-
-const App: React.FC = () => {
+const App = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const background = location.state?.background;
@@ -161,7 +113,32 @@ const App: React.FC = () => {
       </Routes>
 
       {background && (
-        <ModalRoutes background={background} closeModal={closeModal} />
+        <Routes>
+          <Route
+            path='/feed/:number'
+            element={
+              <Modal title='Информация о заказе' onClose={closeModal}>
+                <OrderInfo />
+              </Modal>
+            }
+          />
+          <Route
+            path='/ingredients/:id'
+            element={
+              <Modal title='Детали ингредиента' onClose={closeModal}>
+                <IngredientDetails />
+              </Modal>
+            }
+          />
+          <Route
+            path='/profile/orders/:number'
+            element={
+              <Modal title='Информация о заказе' onClose={closeModal}>
+                <OrderInfo />
+              </Modal>
+            }
+          />
+        </Routes>
       )}
     </div>
   );

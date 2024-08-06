@@ -12,7 +12,7 @@ import { orderByNumberReducer } from './slices/orderInfoReducer';
 import { userReducer } from './slices/userReducer';
 import { userOrdersReducer } from './slices/usersOrderReducer';
 
-// Определение редьюсеров для всех модулей
+// Определение редьюсеров для каждого модуля
 const rootReducer = combineReducers({
   auth: userReducer,
   burgerConstructor: burgerConstructorReducer,
