@@ -1,8 +1,7 @@
 import {
   createAsyncThunk,
   createSlice,
-  createSelector,
-  PayloadAction
+  createSelector
 } from '@reduxjs/toolkit';
 import { getIngredientsApi } from '@api';
 import { TIngredient } from '@utils-types';
@@ -20,26 +19,21 @@ const initialState: IIngredientSliceState = {
   error: undefined
 };
 
-interface FetchIngredientsError {
-  message: string;
-}
-
+// Обновлённая типизация и обработка ответа от API
 export const fetchIngredients = createAsyncThunk<
   TIngredient[],
   void,
-  { rejectValue: FetchIngredientsError }
+  { rejectValue: string }
 >('ingredients/fetchIngredients', async (_, { rejectWithValue }) => {
   try {
-    const response: TIngredient[] = await getIngredientsApi();
+    const response: TIngredient[] = await getIngredientsApi(); // Предполагаем, что API возвращает массив напрямую
     return response;
   } catch (error: any) {
-    return rejectWithValue({
-      message: error.message || 'An unknown error occurred'
-    });
+    return rejectWithValue(error.message || 'An unknown error occurred');
   }
 });
 
-const ingredientsSlice = createSlice({
+export const ingredientsSlice = createSlice({
   name: 'ingredients',
   initialState,
   reducers: {},
@@ -48,34 +42,23 @@ const ingredientsSlice = createSlice({
       .addCase(fetchIngredients.pending, (state) => {
         state.isIngredientsLoading = true;
       })
-      .addCase(
-        fetchIngredients.rejected,
-        (state, action: PayloadAction<FetchIngredientsError | undefined>) => {
-          state.isIngredientsLoading = false;
-          state.error = action.payload?.message || 'An error occurred';
-        }
-      )
-      .addCase(
-        fetchIngredients.fulfilled,
-        (state, action: PayloadAction<TIngredient[]>) => {
-          state.isIngredientsLoading = false;
-          state.ingredients = action.payload;
-        }
-      );
+      .addCase(fetchIngredients.rejected, (state, action) => {
+        state.isIngredientsLoading = false;
+        state.error = action.payload || 'An error occurred';
+      })
+      .addCase(fetchIngredients.fulfilled, (state, action) => {
+        state.isIngredientsLoading = false;
+        state.ingredients = action.payload;
+      });
   }
 });
 
-export const selectIngredients = (state: RootState): TIngredient[] =>
+export const selectIngredients = (state: RootState) =>
   state.ingredients.ingredients;
-
-export const selectIngredientsLoading = (state: RootState): boolean =>
+export const selectIngredientsLoading = (state: RootState) =>
   state.ingredients.isIngredientsLoading;
-
-export const selectIngredientsError = (state: RootState): string | undefined =>
-  state.ingredients.error;
-
 export const selectIngredientsByType = (type: string) =>
-  createSelector([selectIngredients], (ingredients: TIngredient[]) =>
+  createSelector([selectIngredients], (ingredients) =>
     ingredients.filter((item) => item.type === type)
   );
 

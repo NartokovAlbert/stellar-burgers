@@ -1,6 +1,6 @@
 import { ReactElement, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { RootState, useSelector } from '../../services/store';
+import { useSelector } from '../../services/store';
 import { Preloader } from '../ui/preloader';
 
 type ProtectedRouteProps = {
@@ -12,23 +12,25 @@ export const ProtectedRoute = ({
   onlyUnAuth = false,
   children
 }: ProtectedRouteProps): ReactElement => {
-  const { isAuthenticated, loginUserRequest, data } = useSelector(
-    (state: RootState) => state.auth
-  );
-  const location = useLocation();
-  const from = (location.state as { from: { pathname: string } })?.from || {
-    pathname: '/'
-  };
+  const isAuthChecked = useSelector((state) => state.auth.isAuthenticated);
 
-  if (!isAuthenticated && loginUserRequest) {
+  const loginRequested = useSelector((state) => state.auth.loginUserRequest);
+
+  const user = useSelector((state) => state.auth.data.name);
+
+  const location = useLocation();
+
+  const from = location.state?.from || { pathname: '/' };
+
+  if (!isAuthChecked && loginRequested) {
     return <Preloader />;
   }
 
-  if (onlyUnAuth && data.name) {
-    return <Navigate replace to={from} state={{ from: location }} />;
+  if (onlyUnAuth && user) {
+    return <Navigate replace to={from} state={location} />;
   }
 
-  if (!onlyUnAuth && !data.name) {
+  if (!onlyUnAuth && !user) {
     return <Navigate to='/login' state={{ from: location }} />;
   }
 

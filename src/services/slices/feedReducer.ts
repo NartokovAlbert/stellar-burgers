@@ -35,7 +35,7 @@ export const fetchFeedsApi = createAsyncThunk<
 >('feed/fetchFeedsApi', async (_, { rejectWithValue }) => {
   try {
     const response = await getFeedsApi();
-
+    // Проверяем наличие 'error' и что это строка
     if (
       typeof response === 'object' &&
       'error' in response &&
@@ -44,16 +44,17 @@ export const fetchFeedsApi = createAsyncThunk<
       return rejectWithValue(response.error);
     }
     if ('orders' in response) {
-      return response;
+      return response; // Предполагаем, что response валидный и соответствует ожидаемому типу
     }
-
+    // Если ответ не содержит ожидаемые данные
     return rejectWithValue('Invalid API response');
   } catch (error: unknown) {
+    // Обрабатываем все типы ошибок, которые могут возникнуть при запросе
     if (error instanceof Error && typeof error.message === 'string') {
       return rejectWithValue(error.message);
     }
-
-    return rejectWithValue('ошибка');
+    // Если ошибка не является экземпляром Error или message не строка
+    return rejectWithValue('Network error');
   }
 });
 
@@ -83,6 +84,7 @@ const feedSlice = createSlice({
   }
 });
 
+// Селекторы
 export const selectFeedIsLoading = (state: { feed: TFeedSliceState }) =>
   state.feed.feedIsLoading;
 export const selectFeeds = (state: { feed: TFeedSliceState }) =>
